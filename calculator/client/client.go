@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"learn/calculator/calculatorpb"
 	"log"
 
@@ -20,9 +21,11 @@ func main() {
 
 	client := calculatorpb.NewCalculatorServiceClient(cc)
 
-	callAdd(client)
+	// 	callAdd(client)
+	//
+	// 	callSubstract(client)
 
-	callSubstract(client)
+	callPND(client)
 }
 
 func callAdd(c calculatorpb.CalculatorServiceClient) {
@@ -55,4 +58,29 @@ func callSubstract(c calculatorpb.CalculatorServiceClient) {
 	}
 
 	log.Printf("response from substract %v", resp)
+}
+
+func callPND(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("calling PrimeNumberDecomposition...")
+	stream, err := c.PrimeNumberDecomposition(context.Background(), &calculatorpb.PNDRequest{
+		Number: 120,
+	})
+
+	if err != nil {
+		log.Fatalf("err while calling PrimeNumberDecomposition %v", err)
+	}
+
+	for {
+		resp, recvErr := stream.Recv()
+		if recvErr == io.EOF {
+			log.Println("server finish streaming")
+			return
+		}
+
+		if recvErr != nil {
+			log.Fatalf("callPND recvErr %v", recvErr)
+		}
+
+		log.Printf("prime number %v", resp.GetResult())
+	}
 }
